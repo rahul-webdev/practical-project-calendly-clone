@@ -1,9 +1,23 @@
+import { encrypt, decrypt } from "./crypto";
+
 export type ApiMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export type ApiResponse<T = unknown> = { success: boolean; data?: T; message?: string };
-const BASE_URL: string = import.meta.env?.VITE_API_BASE_URL || "";
+
+const BASE_URL: string = import.meta.env?.VITE_API_BASE_URL || "http://localhost:4000";
+const API_VERSION: string = import.meta.env?.VITE_API_VERSION || "v1";
+const API_KEY: string = import.meta.env?.VITE_API_KEY || "calendly_clone_secret_key";
+
 function buildUrl(route: string, method: ApiMethod, payload?: unknown): string {
   const absolute = route.startsWith("http://") || route.startsWith("https://");
-  let url = absolute ? route : BASE_URL ? (route.startsWith("/") ? `${BASE_URL}${route}` : `${BASE_URL}/${route}`) : route;
+  
+  let url = route;
+  if (!absolute) {
+    const base = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
+    const versionedBase = `${base}/api/${API_VERSION}`;
+    const cleanRoute = route.startsWith("/") ? route : `/${route}`;
+    url = `${versionedBase}${cleanRoute}`;
+  }
+
   if (method === "GET" && payload && typeof payload === "object" && !Array.isArray(payload)) {
     const params = new URLSearchParams();
     Object.entries(payload as Record<string, unknown>).forEach(([k, v]) => {
@@ -38,7 +52,11 @@ export async function apiRequest<T = unknown>(
   payload?: unknown,
   init?: RequestInit,
 ): Promise<ApiResponse<T>> {
-  const headers: Record<string, string> = { Accept: "application/json" };
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "X-API-KEY": API_KEY,
+    "X-API-VERSION": API_VERSION,
+  };
   let body: BodyInit | undefined;
   const isFormData = typeof FormData !== "undefined" && payload instanceof FormData;
   if (payload !== undefined && method !== "GET") {
@@ -46,7 +64,12 @@ export async function apiRequest<T = unknown>(
       body = payload as FormData;
     } else {
       headers["Content-Type"] = "application/json";
-      body = JSON.stringify(payload);
+      const encryptedData = encrypt(payload);
+      if (encryptedData) {
+        body = JSON.stringify({ data: encryptedData });
+      } else {
+        body = JSON.stringify(payload);
+      }
     }
   }
   const url = buildUrl(route, method, payload);
@@ -60,9 +83,12 @@ export async function apiRequest<T = unknown>(
 
   try {
     const res = await fetch(url, { ...init, method, headers: mergedHeaders, body });
-    let parsed: unknown;
+    let parsed: any;
     try {
       parsed = await res.json();
+      if (parsed && parsed.encrypted && typeof parsed.data === "string") {
+        parsed = decrypt(parsed.data);
+      }
     } catch {
       parsed = undefined;
     }
