@@ -22,7 +22,7 @@ const specs = {
   updateProfile: { key: "updateProfile", route: "/auth/me", method: "PATCH", requiresAuth: true } as ApiSpec<UserProfileUpdatePayload, UserProfileResponse>,
   meetingsList: { key: "meetingsList", route: "/meetings", method: "GET", requiresAuth: true } as ApiSpec<MeetingsListPayload, MeetingsListResponse>,
   meetingDelete: { key: "meetingDelete", route: "/meetings/:id", method: "DELETE", requiresAuth: true } as ApiSpec<{ id: string }, { id: string }>,
-  availabilityCreate: { key: "availabilityCreate", route: "/availability", method: "POST", requiresAuth: true } as ApiSpec<AvailabilityCreatePayload, { id: string }>,
+  availabilityCreate: { key: "availabilityCreate", route: "/availability", method: "POST", requiresAuth: true } as ApiSpec<AvailabilityCreatePayload, { id: string; date: string; start_time: string; end_time: string }>,
   availabilityList: { key: "availabilityList", route: "/availability", method: "GET", requiresAuth: true } as ApiSpec<unknown, { id: string; date: string; start_time: string; end_time: string }[]>,
   availabilityDelete: { key: "availabilityDelete", route: "/availability/:id", method: "DELETE", requiresAuth: true } as ApiSpec<AvailabilityDeletePayload, { id: string }>,
   linkGenerate: { key: "linkGenerate", route: "/links/generate", method: "POST", requiresAuth: true } as ApiSpec<unknown, LinkGenerateResponse>,

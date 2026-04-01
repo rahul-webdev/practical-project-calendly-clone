@@ -14,8 +14,8 @@ router.get("/bookings/available/:linkId", async (req, res, next) => {
     // 1. Get user's availability for that date
     const availabilities = await Availability.find({ user_id: link.user_id, date });
     
-    // 2. Get existing bookings for that date
-    const bookings = await Booking.find({ user_id: link.user_id, date });
+    // 2. Get existing bookings for that date on this specific link
+    const bookings = await Booking.find({ link_id: linkId, date });
     const bookedTimes = bookings.map(b => b.time);
 
     // 3. Generate time slots based on availability and exclude booked ones

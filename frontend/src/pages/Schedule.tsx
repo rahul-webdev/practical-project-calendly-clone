@@ -45,21 +45,10 @@ const Schedule = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [slotsRes, linksRes, meetingsRes] = await Promise.all([
-        callRequiredApi<"availabilityList", unknown, { id: string; date: string; start_time: string; end_time: string }[]>("availabilityList"),
+      const [linksRes, meetingsRes] = await Promise.all([
         callRequiredApi<"linksList", unknown, { id: string; link: string }[]>("linksList"),
         callRequiredApi<"meetingsList", { pageSize: 100 }, { items: Meeting[] }>("meetingsList", { pageSize: 100 })
       ]);
-
-      if (slotsRes.success && slotsRes.data) {
-        const slots = (slotsRes.data as any[]).map(item => ({
-          id: item.id,
-          date: parseISO(item.date),
-          startTime: item.start_time,
-          endTime: item.end_time
-        }));
-        setAvailabilitySlots(slots);
-      }
 
       if (linksRes.success && linksRes.data) {
         setGeneratedLinks(linksRes.data);
@@ -114,10 +103,16 @@ const Schedule = () => {
       startTime,
       endTime,
     };
-    const res = await callRequiredApi<"availabilityCreate", typeof payload, { id: string }>("availabilityCreate", payload);
+    const res = await callRequiredApi<"availabilityCreate", typeof payload, { id: string; date: string; start_time: string; end_time: string }>("availabilityCreate", payload);
     if (res.success && res.data) {
-      const id = (res.data as { id: string }).id;
-      setAvailabilitySlots([...availabilitySlots, { ...newSlot, id }]);
+      const savedData = res.data;
+      const newSlotFromRes: AvailabilitySlot = {
+        id: savedData.id,
+        date: parseISO(savedData.date),
+        startTime: savedData.start_time,
+        endTime: savedData.end_time
+      };
+      setAvailabilitySlots([...availabilitySlots, newSlotFromRes]);
       setSelectedDate(undefined);
       setStartTime("");
       setEndTime("");

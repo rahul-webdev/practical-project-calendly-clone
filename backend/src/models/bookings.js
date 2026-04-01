@@ -25,6 +25,8 @@ const bookingSchema = new mongoose.Schema(
   },
 );
 
+bookingSchema.index({ link_id: 1, date: 1, time: 1 });
+
 const Booking = mongoose.model("Booking", bookingSchema);
 
 async function createBooking({ linkId, date, time, name, email }) {
@@ -54,7 +56,7 @@ async function createBooking({ linkId, date, time, name, email }) {
   }
 
   const existingBooking = await Booking.findOne({
-    user_id: link.user_id,
+    link_id: linkId,
     date,
     time,
   });

@@ -51,7 +51,7 @@ async function createAvailability({ userId, date, startTime, endTime }) {
     end_time: endTime,
   });
   const saved = await availability.save();
-  return { id: saved.id };
+  return saved;
 }
 
 async function deleteAvailability({ userId, id }) {
